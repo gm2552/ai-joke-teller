@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: ai-joke-teller
+spec:
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      containerapp.apps.tanzu.vmware.com/app-name: ai-joke-teller
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 10%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        containerapp.apps.tanzu.vmware.com/content-summary: image:e433f2d @ 2024-09-13T04:16:08Z
+        kubectl.kubernetes.io/default-container: main
+      creationTimestamp: null
+      labels:
+        containerapp.apps.tanzu.vmware.com/app-name: ai-joke-teller
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: JAVA_TOOL_OPTIONS
+          value: -Dmanagement.endpoint.health.probes.add-additional-paths=true -Dmanagement.health.probes.enabled=true
+            -Dserver.port=8080 -Dserver.shutdown.grace-period=24s
+        - name: SPRING_AI_OPENAI_API_KEY
+          valueFrom:
+             secretKeyRef:
+               name: ai-test-app
+               key: api-key
+        - name: SPRING_AI_OPENAI_BASE_URL
+          valueFrom:
+             secretKeyRef:
+               name: ai-test-app
+               key: uri
+        - name: SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL
+          value: llama-3-instruct             
+        image: reg.perfect300rock.com/tapdev/ai-joke-teller@sha256:e433f2df97d2d185491ca9949b339a63b57725836cbe45a55e7efa11ff91345c
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: 8080
+            scheme: HTTP
+        name: main
+        ports:
+        - containerPort: 8080
+          name: main
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+            scheme: HTTP
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 300m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        startupProbe:
+          failureThreshold: 120
+          httpGet:
+            path: /readyz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        volumeMounts:
+        - mountPath: /tmp
+          name: tanzu-tmp
+      enableServiceLinks: false
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: ai-joke-teller
+      terminationGracePeriodSeconds: 300
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            containerapp.apps.tanzu.vmware.com/app-name: ai-joke-teller
+        matchLabelKeys:
+        - pod-template-hash
+        maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+      - labelSelector:
+          matchLabels:
+            containerapp.apps.tanzu.vmware.com/app-name: ai-joke-teller
+        matchLabelKeys:
+        - pod-template-hash
+        maxSkew: 1
+        topologyKey: topology.kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+      volumes:
+      - emptyDir: {}
+        name: tanzu-tmp
+status: {}

@@ -1,0 +1,36 @@
+---
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    org.apache.hc.client5.http.headers: DEBUG
+    org.apache.hc.client5.http.wire: DEBUG
+    org.apache.http: DEBUG
+    org.apache.http.wire: DEBUG
+
+
+
+spring:
+  application.name: ai-joke-teller
+#---
+
+#spring:
+#  config.activate.on-profile: titan
+  
+#  ai.bedrock.titan.chat.enabled: true
+#  ai.bedrock.aws.region: us-west-2
+  
+#  ai:
+#    vertex:
+#      ai:
+#        gemini:
+#          location: us-central1
+#          project-id: gen-lang-client-0763883250
+#          chat:
+#            options:
+#              model: gemini-1.5-flash-001
+          #transport: REST
+              
+  
